@@ -91,4 +91,18 @@
         android:layout_marginTop="20dp"
         android:textColor="@android:color/holo_orange_dark"/>
 
+    <Button
+        android:id="@+id/btnHistory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="XEM LỊCH SỬ"
+        android:layout_marginTop="10dp"/>
+
+    <Button
+        android:id="@+id/btnChart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="XEM BIỂU ĐỒ"
+        android:layout_marginTop="10dp"/>
+
 </LinearLayout>

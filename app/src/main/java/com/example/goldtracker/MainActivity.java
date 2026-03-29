@@ -1,9 +1,12 @@
 package com.example.goldtracker;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -19,6 +22,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+
 import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -45,9 +50,14 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private String currentGoldCode = "SJL1L10";
+    private Button btnHistory;
+    private Button btnChart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //Tính năng sáng tạo: Dark Mode
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -57,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
         btnConvert = findViewById(R.id.btnConvert);
         spinnerGoldType = findViewById(R.id.spinnerGoldType);
         txtCurrentPrice = findViewById(R.id.txtCurrentPrice);
+        btnHistory = findViewById(R.id.btnHistory);
+        btnChart = findViewById(R.id.btnChart);
 
         //Spinner
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, goldNames);
@@ -79,6 +91,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Tính năng sáng tạo: Auto refresh giá vàng
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                new GetGoldPriceTask().execute(currentGoldCode);
+                handler.postDelayed(this, 30000);
+            }
+        }, 30000);
+
         btnConvert.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -91,7 +113,22 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Đang tải giá vàng, vui lòng đợi giây lát!", Toast.LENGTH_SHORT).show();
                 }
                 else {
+                    // Tính toán
                     calculateTotal();
+
+                    // Lưu lịch sử
+                    SharedPreferences prefs = getSharedPreferences("HISTORY", MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+
+                    String historyItem =
+                            goldNames[spinnerGoldType.getSelectedItemPosition()] + " | "
+                                    + edtQuantity.getText().toString() + " lượng | "
+                                    + txtResult.getText().toString();
+
+                    editor.putString(String.valueOf(System.currentTimeMillis()), historyItem);
+                    editor.apply();
+
+                    // Thông báo
                     Toast.makeText(MainActivity.this, "Đã quy đổi thành công!", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -109,6 +146,14 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {}
+        });
+
+        btnHistory.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, HistoryActivity.class));
+        });
+
+        btnChart.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, ChartActivity.class));
         });
     }
 
@@ -236,6 +281,20 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 txtCurrentPrice.setText("Giá vàng: " + String.format("%,.0f", currentGoldPriceVND) + " VND / Lượng");
+                // Tính năng sáng tạo: Hiệu ứng khi đổi giá
+                txtCurrentPrice.animate().scaleX(1.2f).scaleY(1.2f).setDuration(200)
+                        .withEndAction(() -> txtCurrentPrice.animate().scaleX(1).scaleY(1).setDuration(200));
+                // Tính năng sáng tạo: Cảnh báo giá tăng/giảm
+                double oldPrice = currentGoldPriceVND;
+
+                if (currentGoldPriceVND > oldPrice) {
+                    txtCurrentPrice.setTextColor(Color.GREEN);
+                } else if (currentGoldPriceVND < oldPrice) {
+                    txtCurrentPrice.setTextColor(Color.RED);
+                } else {
+                    txtCurrentPrice.setTextColor(Color.BLACK);
+                }
+
                 calculateTotal();
 
             } catch (Exception e) {
