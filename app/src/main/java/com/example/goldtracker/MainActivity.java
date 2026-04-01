@@ -55,9 +55,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        //Tính năng sáng tạo: Dark Mode
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
