@@ -22,7 +22,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -30,6 +29,12 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
+
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Vibrator;
 
 public class MainActivity extends AppCompatActivity {
     private TableLayout tableDashboard;
@@ -52,6 +57,10 @@ public class MainActivity extends AppCompatActivity {
     private String currentGoldCode = "SJL1L10";
     private Button btnHistory;
     private Button btnChart;
+
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
+    private ShakeDetector shakeDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -152,6 +161,11 @@ public class MainActivity extends AppCompatActivity {
         btnChart.setOnClickListener(v -> {
             startActivity(new Intent(MainActivity.this, ChartActivity.class));
         });
+
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        shakeDetector = new ShakeDetector();
+        sensorManager.registerListener(shakeDetector, accelerometer, SensorManager.SENSOR_DELAY_UI);
     }
 
     private void calculateTotal() {
@@ -299,4 +313,53 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (sensorManager != null && accelerometer != null) {
+            sensorManager.registerListener(shakeDetector, accelerometer, SensorManager.SENSOR_DELAY_UI);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (sensorManager != null) {
+            sensorManager.unregisterListener(shakeDetector);
+        }
+    }
+
+    private class ShakeDetector implements SensorEventListener {
+        private static final float SHAKE_THRESHOLD = 12.0f; // ngưỡng lắc
+        private long lastShakeTime = 0;
+
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            float x = event.values[0];
+            float y = event.values[1];
+            float z = event.values[2];
+
+            float acceleration = (float) Math.sqrt(x*x + y*y + z*z) - SensorManager.GRAVITY_EARTH;
+
+            if (acceleration > SHAKE_THRESHOLD) {
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastShakeTime > 1000) { // chống lắc liên tục
+                    lastShakeTime = currentTime;
+                    new GetGoldPriceTask().execute(currentGoldCode);
+                    vibrateDevice();
+                    Toast.makeText(MainActivity.this, "Đang cập nhật giá vàng...", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+    }
+
+    private void vibrateDevice() {
+        Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        if (vibrator != null) vibrator.vibrate(200);
+    }
+
 }
