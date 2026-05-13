@@ -105,4 +105,11 @@
         android:text="XEM BIỂU ĐỒ"
         android:layout_marginTop="10dp"/>
 
+    <Button
+        android:id="@+id/btnToggleDark"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🌗 Chuyển Dark/Light Mode"
+        android:layout_marginTop="8dp"/>
+
 </LinearLayout>
