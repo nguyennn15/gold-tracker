@@ -68,31 +68,40 @@ public class ChartActivity extends AppCompatActivity {
 
         BarDataSet dataSet = new BarDataSet(entries, "Số lần quy đổi theo loại vàng");
         dataSet.setColor(Color.parseColor("#4CAF50"));  // màu xanh đẹp
-        dataSet.setValueTextColor(Color.BLACK);
         dataSet.setValueTextSize(12f);
 
-        BarData barData = new BarData(dataSet);
-        barData.setBarWidth(0.6f);  // độ rộng cột
+        int textColor;
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        if (currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
+            textColor = Color.WHITE;
+        } else {
+            textColor = Color.BLACK;
+        }
 
+        dataSet.setValueTextColor(textColor);
+
+        BarData barData = new BarData(dataSet);
+        barData.setBarWidth(0.6f);
         barChart.setData(barData);
 
-        // Cấu hình trục X (tên loại vàng)
         XAxis xAxis = barChart.getXAxis();
         xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setGranularity(1f);
         xAxis.setGranularityEnabled(true);
-        xAxis.setLabelRotationAngle(30);  // xoay nhãn nếu dài
+        xAxis.setLabelRotationAngle(30);
+        xAxis.setTextColor(textColor);
 
-        // Cấu hình trục Y
         YAxis leftAxis = barChart.getAxisLeft();
-        leftAxis.setGranularity(1f);  // bước nhảy là số nguyên
+        leftAxis.setGranularity(1f);
+        leftAxis.setTextColor(textColor);
         barChart.getAxisRight().setEnabled(false);
 
-        // Tùy chỉnh khác
+        barChart.getLegend().setTextColor(textColor);
+
         barChart.getDescription().setEnabled(false);
         barChart.setDrawGridBackground(false);
-        barChart.animateY(1500);  // animation đẹp
-        barChart.invalidate();    // refresh chart
+        barChart.animateY(1500);
+        barChart.invalidate();
     }
 }

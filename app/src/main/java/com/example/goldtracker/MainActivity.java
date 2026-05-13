@@ -22,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -65,7 +66,15 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        SharedPreferences themePrefs = getSharedPreferences("THEME_PREFS", MODE_PRIVATE);
+        boolean isDarkMode = themePrefs.getBoolean("IS_DARK_MODE", false);
+
+        if (isDarkMode) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -172,16 +181,26 @@ public class MainActivity extends AppCompatActivity {
         // === DARK MODE TOGGLE ===
         btnToggleDark = findViewById(R.id.btnToggleDark);
 
+        if (isDarkMode) {
+            btnToggleDark.setText("🌞 Chuyển Light Mode");
+        } else {
+            btnToggleDark.setText("🌙 Chuyển Dark Mode");
+        }
+
         btnToggleDark.setOnClickListener(v -> {
-            int currentMode = AppCompatDelegate.getDefaultNightMode();
-            if (currentMode == AppCompatDelegate.MODE_NIGHT_YES) {
+            boolean currentDark = themePrefs.getBoolean("IS_DARK_MODE", false);
+            SharedPreferences.Editor editor = themePrefs.edit();
+
+            if (currentDark) {
+                editor.putBoolean("IS_DARK_MODE", false);
+                editor.apply();
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-                btnToggleDark.setText("🌞 Chuyển Light Mode");
             } else {
+                editor.putBoolean("IS_DARK_MODE", true);
+                editor.apply();
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-                btnToggleDark.setText("🌙 Chuyển Dark Mode");
             }
-    });
+        });
     }
 
     private void calculateTotal() {
@@ -237,12 +256,19 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 JSONObject pricesObj = jsonObject.getJSONObject("prices");
-
                 tableDashboard.removeAllViews();
 
-                //HEADER
+                int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+                boolean isDarkMode = currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+
+                int headerBgColor = isDarkMode ? Color.parseColor("#333333") : Color.parseColor("#E0E0E0"); // Nền header
+                int textColor = isDarkMode ? Color.WHITE : Color.BLACK; // Chữ thường
+                int lineColor = isDarkMode ? Color.parseColor("#555555") : Color.parseColor("#CCCCCC"); // Đường kẻ
+                int buyColor = isDarkMode ? Color.parseColor("#81C784") : Color.parseColor("#2E7D32"); // Xanh (sáng hơn ở Dark)
+                int sellColor = isDarkMode ? Color.parseColor("#E57373") : Color.parseColor("#B71C1C"); // Đỏ (sáng hơn ở Dark)
+
                 TableRow headerRow = new TableRow(MainActivity.this);
-                headerRow.setBackgroundColor(Color.parseColor("#E0E0E0"));
+                headerRow.setBackgroundColor(headerBgColor);
                 headerRow.setPadding(0, 10, 0, 10);
 
                 String[] headers = {"LOẠI VÀNG", "GIÁ MUA", "GIÁ BÁN"};
@@ -251,11 +277,11 @@ public class MainActivity extends AppCompatActivity {
                     tv.setText(h);
                     tv.setTypeface(null, Typeface.BOLD);
                     tv.setGravity(Gravity.CENTER);
+                    tv.setTextColor(textColor);
                     headerRow.addView(tv);
                 }
                 tableDashboard.addView(headerRow);
 
-                //Row du lieu
                 Iterator<String> keys = pricesObj.keys();
                 while (keys.hasNext()) {
                     String typeCode = keys.next();
@@ -270,28 +296,27 @@ public class MainActivity extends AppCompatActivity {
                     String strBuy = String.format("%,.0f", buy);
                     String strSell = String.format("%,.0f", sell);
 
-                    // Tạo 1 hàng mới
                     TableRow row = new TableRow(MainActivity.this);
                     row.setPadding(0, 15, 0, 15);
 
-                    // Cột 1: Loại vàng
                     TextView tvName = new TextView(MainActivity.this);
                     tvName.setText(name);
                     tvName.setTypeface(null, Typeface.BOLD);
                     tvName.setGravity(Gravity.CENTER);
+                    tvName.setTextColor(textColor);
                     row.addView(tvName);
 
                     // Cột 2: Giá mua
                     TextView tvBuy = new TextView(MainActivity.this);
                     tvBuy.setText(strBuy);
-                    tvBuy.setTextColor(Color.parseColor("#2E7D32"));
+                    tvBuy.setTextColor(buyColor);
                     tvBuy.setGravity(Gravity.CENTER);
                     row.addView(tvBuy);
 
                     // Cột 3: Giá bán
                     TextView tvSell = new TextView(MainActivity.this);
                     tvSell.setText(strSell);
-                    tvSell.setTextColor(Color.parseColor("#B71C1C")); // Đỏ đậm
+                    tvSell.setTextColor(sellColor);
                     tvSell.setGravity(Gravity.CENTER);
                     row.addView(tvSell);
 
@@ -299,27 +324,25 @@ public class MainActivity extends AppCompatActivity {
 
                     View line = new View(MainActivity.this);
                     line.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, 1));
-                    line.setBackgroundColor(Color.parseColor("#CCCCCC"));
+                    line.setBackgroundColor(lineColor);
                     tableDashboard.addView(line);
 
-                    // Lấy giá để quy đổi tiền nếu khớp Spinner
                     if (typeCode.equals(currentGoldCode)) {
                         currentGoldPriceVND = sell;
                     }
                 }
+
                 txtCurrentPrice.setText("Giá vàng: " + String.format("%,.0f", currentGoldPriceVND) + " VND / Lượng");
-                // Tính năng sáng tạo: Hiệu ứng khi đổi giá
                 txtCurrentPrice.animate().scaleX(1.2f).scaleY(1.2f).setDuration(200)
                         .withEndAction(() -> txtCurrentPrice.animate().scaleX(1).scaleY(1).setDuration(200));
-                // Tính năng sáng tạo: Cảnh báo giá tăng/giảm
-                double oldPrice = currentGoldPriceVND;
 
+                double oldPrice = currentGoldPriceVND;
                 if (currentGoldPriceVND > oldPrice) {
-                    txtCurrentPrice.setTextColor(Color.GREEN);
+                    txtCurrentPrice.setTextColor(buyColor);
                 } else if (currentGoldPriceVND < oldPrice) {
-                    txtCurrentPrice.setTextColor(Color.RED);
+                    txtCurrentPrice.setTextColor(sellColor);
                 } else {
-                    txtCurrentPrice.setTextColor(Color.BLACK);
+                    txtCurrentPrice.setTextColor(textColor);
                 }
 
                 calculateTotal();
