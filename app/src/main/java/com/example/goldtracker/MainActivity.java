@@ -96,7 +96,6 @@ public class MainActivity extends AppCompatActivity {
         spinnerGoldType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                // Lấy mã code vị trí được chọn
                 currentGoldCode = goldCodes[position];
 
                 // Gọi lại API với mã vàng mới
@@ -130,10 +129,8 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Đang tải giá vàng, vui lòng đợi giây lát!", Toast.LENGTH_SHORT).show();
                 }
                 else {
-                    // Tính toán
                     calculateTotal();
 
-                    // Lưu lịch sử
                     SharedPreferences prefs = getSharedPreferences("HISTORY", MODE_PRIVATE);
                     SharedPreferences.Editor editor = prefs.edit();
 
@@ -145,7 +142,6 @@ public class MainActivity extends AppCompatActivity {
                     editor.putString(String.valueOf(System.currentTimeMillis()), historyItem);
                     editor.apply();
 
-                    // Thông báo
                     Toast.makeText(MainActivity.this, "Đã quy đổi thành công!", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -261,11 +257,11 @@ public class MainActivity extends AppCompatActivity {
                 int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
                 boolean isDarkMode = currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES;
 
-                int headerBgColor = isDarkMode ? Color.parseColor("#333333") : Color.parseColor("#E0E0E0"); // Nền header
+                int headerBgColor = isDarkMode ? Color.parseColor("#333333") : Color.parseColor("#E0E0E0");
                 int textColor = isDarkMode ? Color.WHITE : Color.BLACK; // Chữ thường
-                int lineColor = isDarkMode ? Color.parseColor("#555555") : Color.parseColor("#CCCCCC"); // Đường kẻ
-                int buyColor = isDarkMode ? Color.parseColor("#81C784") : Color.parseColor("#2E7D32"); // Xanh (sáng hơn ở Dark)
-                int sellColor = isDarkMode ? Color.parseColor("#E57373") : Color.parseColor("#B71C1C"); // Đỏ (sáng hơn ở Dark)
+                int lineColor = isDarkMode ? Color.parseColor("#555555") : Color.parseColor("#CCCCCC");
+                int buyColor = isDarkMode ? Color.parseColor("#81C784") : Color.parseColor("#2E7D32");
+                int sellColor = isDarkMode ? Color.parseColor("#E57373") : Color.parseColor("#B71C1C");
 
                 TableRow headerRow = new TableRow(MainActivity.this);
                 headerRow.setBackgroundColor(headerBgColor);
@@ -370,7 +366,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private class ShakeDetector implements SensorEventListener {
-        private static final float SHAKE_THRESHOLD = 12.0f; // ngưỡng lắc
+        private static final float SHAKE_THRESHOLD = 12.0f;
         private long lastShakeTime = 0;
 
         @Override
@@ -383,7 +379,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (acceleration > SHAKE_THRESHOLD) {
                 long currentTime = System.currentTimeMillis();
-                if (currentTime - lastShakeTime > 1000) { // chống lắc liên tục
+                if (currentTime - lastShakeTime > 1000) {
                     lastShakeTime = currentTime;
                     new GetGoldPriceTask().execute(currentGoldCode);
                     vibrateDevice();

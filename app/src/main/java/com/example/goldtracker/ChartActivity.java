@@ -28,24 +28,20 @@ public class ChartActivity extends AppCompatActivity {
 
         barChart = findViewById(R.id.barChart);
 
-        // Đọc lịch sử và thống kê số lần quy đổi theo loại vàng
         SharedPreferences prefs = getSharedPreferences("HISTORY", MODE_PRIVATE);
         Map<String, ?> allEntries = prefs.getAll();
 
-        // Map để đếm số lần theo loại vàng
         HashMap<String, Integer> countMap = new HashMap<>();
 
         for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
             String historyItem = entry.getValue().toString();  // ví dụ: "SJC 9999 | 5 lượng | 123,456,789 VND"
 
-            // Lấy tên loại vàng (phần trước dấu "|")
             if (historyItem.contains("|")) {
                 String goldType = historyItem.split("\\|")[0].trim();
                 countMap.put(goldType, countMap.getOrDefault(goldType, 0) + 1);
             }
         }
 
-        // Chuẩn bị dữ liệu cho biểu đồ
         ArrayList<BarEntry> entries = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
 
@@ -56,7 +52,6 @@ public class ChartActivity extends AppCompatActivity {
             index++;
         }
 
-        // Nếu chưa có dữ liệu → dùng demo
         if (entries.isEmpty()) {
             entries.add(new BarEntry(0, 2)); // SJC
             entries.add(new BarEntry(1, 4)); // DOJI
@@ -67,7 +62,7 @@ public class ChartActivity extends AppCompatActivity {
         }
 
         BarDataSet dataSet = new BarDataSet(entries, "Số lần quy đổi theo loại vàng");
-        dataSet.setColor(Color.parseColor("#4CAF50"));  // màu xanh đẹp
+        dataSet.setColor(Color.parseColor("#4CAF50"));
         dataSet.setValueTextSize(12f);
 
         int textColor;
